@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  username  String?    @unique
+  googleId  String?    @unique
+  password  String?
+  userType UserType  @default(USER)
+  preferences Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+}
+
+
+model Account {
+  id       String    @id @default(uuid())
+  userId  String
+  type UserType @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  provider ProviderType @default(EMAIL)
+  providerAccessToken String?
+  refreshToken String?
+  expiresAt Int?
+
+  activeSessions Session[] 
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id       String    @id @default(uuid())
+  userId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+  active Boolean @default(true)
+  type ActivityType[] @default([])
+  accountId String?
+
+  user User @relation(fields: [userId], references: [id])
+  account Account? @relation(fields: [accountId], references: [id])
+}
+
+
+
+
+enum UserType {
+  USER
+  ADMIN
+}
+
+enum ProviderType {
+  GOOGLE
+  EMAIL
+  USERNAME
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  WATCHING
+  SOLVING
+}
+
